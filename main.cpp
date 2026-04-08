@@ -85,6 +85,52 @@ public:
     // Division assignment operator (x /= y)
     BigInt& operator/=(const BigInt& other) {
         // TODO: Implement this operator
+        if(other.number == "0")
+        {
+            throw runtime_error("Division by zero");
+        }
+
+        BigInt dividend = *this;
+        BigInt divisor = other;
+        bool resultNegative = (dividend.isNegative != divisor.isNegative);
+        dividend.isNegative = false;
+        divisor.isNegative = false;
+        if(dividend.compareMagnitude(divisor) == -1)
+        {
+                number = "0";
+                isNegative = false ;
+                return *this;
+        }
+        BigInt low("0");
+        BigInt high = dividend;
+        BigInt best("0");
+        while(low <= high)
+        {
+
+            BigInt mid = (low + high) / BigInt(2);
+            BigInt product = mid * divisor;
+            if(product <= dividend)
+            {
+                best = mid ;
+                low = mid + BigInt(1);
+            }
+            else
+            {
+             high = mid - BigInt(1);
+            }
+        }
+        *this = best;
+        if(resultNegative && number != "0")
+        {
+            isNegative = true;
+
+        }
+        else
+        {
+        isNegative = false;
+        }
+
+
         return *this;
     }
 
@@ -166,9 +212,11 @@ BigInt operator*(BigInt lhs, const BigInt& rhs) {
 
 // Binary division operator (x / y)
 BigInt operator/(BigInt lhs, const BigInt& rhs) {
-    BigInt result;
+   // BigInt result;
     // TODO: Implement this operator
-    return result;
+    lhs /= rhs;
+
+    return lhs;
 }
 
 // Binary modulus operator (x % y)
@@ -181,37 +229,52 @@ BigInt operator%(BigInt lhs, const BigInt& rhs) {
 // Equality comparison operator (x == y)
 bool operator==(const BigInt& lhs, const BigInt& rhs) {
     // TODO: Implement this operator
-    return false;
+    if(lhs.isNegative != rhs.isNegative)
+    {
+        return false;
+    }
+
+    return lhs.number == rhs.number ;
 }
 
 // Inequality comparison operator (x != y)
 bool operator!=(const BigInt& lhs, const BigInt& rhs) {
     // TODO: Implement this operator
-    return false;
+    return !(lhs == rhs);
 }
 
 // Less-than comparison operator (x < y)
 bool operator<(const BigInt& lhs, const BigInt& rhs) {
     // TODO: Implement this operator
-    return false;
+    if(lhs.isNegative && !rhs.isNegative)
+        return true;
+    if(!lhs.isNegative && rhs.isNegative)
+        return false;
+    int temp = lhs.compareMagnitude(rhs);
+    if(!lhs.isNegative)
+        return temp == -1;
+    else
+    return temp == 1;
+
+
 }
 
 // Less-than-or-equal comparison operator (x <= y)
 bool operator<=(const BigInt& lhs, const BigInt& rhs) {
     // TODO: Implement this operator
-    return false;
+   return (lhs < rhs) || (lhs == rhs) ;
 }
 
 // Greater-than comparison operator (x > y)
 bool operator>(const BigInt& lhs, const BigInt& rhs) {
     // TODO: Implement this operator
-    return false;
+   return !(lhs <= rhs);
 }
 
 // Greater-than-or-equal comparison operator (x >= y)
 bool operator>=(const BigInt& lhs, const BigInt& rhs) {
     // TODO: Implement this operator
-    return false;
+    return !(lhs < rhs);
 }
 
 int main() {
