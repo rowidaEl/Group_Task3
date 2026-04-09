@@ -8,14 +8,29 @@ class BigInt {
 
     // Remove unnecessary leading zeros from the number string
     void removeLeadingZeros() {
-        // TODO: Implement this function
+        int i = 0;
+        while (i < number.size() - 1 && number[i] == '0') {
+            i++;
+        }
+        number = number.substr(i);
+
+        if (number == "0") {
+            isNegative = false;
+        }
     }
 
     // Compare absolute values of two BigInts (ignore signs)
     // Returns: 1 if |this| > |other|, 0 if equal, -1 if |this| < |other|
-    int compareMagnitude(const BigInt& other) const {
-        // TODO: Implement this function
-        return 0;
+   int compareMagnitude(const BigInt& other) const {
+        // Compare lengths first
+        if (number.size() > other.number.size()) return 1;
+        if (number.size() < other.number.size()) return -1;
+
+        // Same length → lexicographical comparison
+        if (number > other.number) return 1;
+        if (number < other.number) return -1;
+
+        return 0; // Equal
     }
 
 public:
@@ -169,20 +184,51 @@ public:
     // Convert BigInt to string representation
     string toString() const {
         // TODO: Implement this function
-        return "";
+        if (isNegative && number != "0") {
+            return "-" + number;
+        }
+        return number;
     }
 
     // Output stream operator (for printing)
     friend ostream& operator<<(ostream& os, const BigInt& num) {
         // TODO: Implement this operator
+        os << num.toString();
         return os;
     }
 
     // Input stream operator (for reading from input)
     friend istream& operator>>(istream& is, BigInt& num) {
         // TODO: Implement this operator
+           string input;
+        is >> input;
+
+        // Reset values
+        num.isNegative = false;
+        num.number = "";
+
+        // Check for sign
+        if (input[0] == '-') {
+            num.isNegative = true;
+            num.number = input.substr(1);
+        } else if (input[0] == '+') {
+            num.number = input.substr(1);
+        } else {
+            num.number = input;
+        }
+
+        // Handle empty case (just in case)
+        if (num.number.empty()) {
+            num.number = "0";
+            num.isNegative = false;
+        }
+
+        // Remove leading zeros and normalize
+        num.removeLeadingZeros();
+
         return is;
     }
+
 
     // Friend declarations for comparison operators
     friend bool operator==(const BigInt& lhs, const BigInt& rhs);
