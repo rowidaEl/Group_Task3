@@ -1,7 +1,13 @@
 #include <iostream>
 #include <string>
 using namespace std;
+class BigInt;   // forward declaration
 
+BigInt operator+(BigInt lhs, const BigInt& rhs);
+BigInt operator-(BigInt lhs, const BigInt& rhs);
+BigInt operator*(BigInt lhs, const BigInt& rhs);
+BigInt operator/(BigInt lhs, const BigInt& rhs);
+BigInt operator%(BigInt lhs, const BigInt& rhs);
 class BigInt
 {
     string number;    // Stores the number as a string
@@ -109,18 +115,82 @@ public:
         return result;
     }
 
-    // Unary plus operator (+x)
+   // Unary plus operator (+x)
     BigInt operator+() const {
-        return *this;
-    }
+        BigInt result = *this;
+            return result;
+}
 
-    BigInt& operator+=(const BigInt& other) {
-        return *this;
+    // Addition assignment operator (x += y)
+        BigInt& operator+=(const BigInt& other) {
+            if (this->isNegative == other.isNegative) {
+        string res = "";
+        int carry = 0;
+        int i = (int)this->number.length() - 1;
+        int j = (int)other.number.length() - 1;
+        while (i >= 0 || j >= 0 || carry > 0) {
+            int sum = carry;
+            if (i >= 0) sum += this->number[i--] - '0';
+            if (j >= 0) sum += other.number[j--] - '0';
+            char c = (sum % 10) + '0';
+            res = c + res;
+            carry = sum / 10;
+        }
+        this->number = res;
     }
+    else {
+        int cmp = this->compareMagnitude(other);
+        if (cmp == 0) {
+            this->number = "0";
+            this->isNegative = false;
+        }
+        else {
+            string a = this->number;
+            string b = other.number;
+            bool resNegative = this->isNegative;
+            if (cmp < 0) {
+                string t = a; a = b; b = t;
+                resNegative = other.isNegative;
+            }
+            string res = "";
+            int borrow = 0;
+            int i = (int)a.length() - 1;
+            int j = (int)b.length() - 1;
+            while (i >= 0) {
+                int sub = (a[i] - '0') - borrow;
+                if (j >= 0) sub -= (b[j] - '0');
+                if (sub < 0) {
+                    sub += 10;
+                    borrow = 1;
+                }
+                else {
+                    borrow = 0;
+                }
+                char c = sub + '0';
+                res = c + res;
+                i--; j--;
+            }
+            int start = 0;
+            while (start < (int)res.length() - 1 && res[start] == '0') start++;
+            this->number = res.substr(start);
+            this->isNegative = resNegative;
+        }
+    }
+    if (this->number.empty() || this->number == "0") {
+        this->number = "0";
+        this->isNegative = false;
+    }
+    return *this;
+}
 
-    BigInt& operator-=(const BigInt& other) {
-        return *this;
+   // Subtraction assignment operator (x -= y)
+BigInt& operator-=(const BigInt& other) {
+    BigInt temp = other;
+    if (temp.number != "" && temp.number != "0") {
+        temp.isNegative = !temp.isNegative;
     }
+    return *this += temp;
+}
 
     BigInt& operator*=(const BigInt& other) {
         if (number == "0" || other.number == "0") {
@@ -151,9 +221,27 @@ public:
         return *this;
     }
 
+    //a helper function to use in the methode of dividing below
+     BigInt divideByTwo(const BigInt& x)
+            {
+    string result = "";
+    int carry = 0;
+
+    for(char c : x.number)
+    {
+        int num = carry * 10 + (c - '0');
+        result += (num / 2) + '0';
+        carry = num % 2;
+    }
+
+    BigInt res(result);
+    res.removeLeadingZeros();
+    return res;
+    }
     // Division assignment operator (x /= y)
     BigInt& operator/=(const BigInt& other)
     {
+
         // TODO: Implement this operator
         if(other.number == "0")
         {
@@ -177,7 +265,8 @@ public:
         while(low <= high)
         {
 
-            BigInt mid = (low + high) / BigInt(2);
+            //BigInt mid = (low + high) / BigInt(2);
+            BigInt mid = divideByTwo(low + high);
             BigInt product = mid * divisor;
             if(product <= dividend)
             {
@@ -204,21 +293,34 @@ public:
         return *this;
     }
 
+
     BigInt& operator%=(const BigInt& other) {
-        if (other.number == "0") {
-            throw runtime_error("Division by zero");
-        }
-
-        BigInt temp = *this;
-        BigInt divisor = other;
-
-        while (temp.compareMagnitude(divisor) >= 0) {
-            temp -= divisor;
-        }
-
-        *this = temp;
-        return *this;
+    if (other.number == "0") {
+        throw runtime_error("Division by zero");
     }
+
+    bool resultNegative = isNegative;
+
+    BigInt dividend = *this;
+    BigInt divisor = other;
+
+    dividend.isNegative = false;
+    divisor.isNegative = false;
+
+    while (dividend.compareMagnitude(divisor) >= 0) {
+        dividend -= divisor;
+    }
+
+    *this = dividend;
+
+    if (resultNegative && number != "0")
+        isNegative = true;
+    else
+        isNegative = false;
+
+    return *this;
+}
+
 
     BigInt& operator++() {
         *this += BigInt(1);
@@ -296,23 +398,27 @@ public:
     }
 
 
+
     // Friend declarations for comparison operators
-    friend bool operator==(const BigInt& lhs, const BigInt& rhs);
-    friend bool operator<(const BigInt& lhs, const BigInt& rhs);
+friend bool operator==(const BigInt& lhs, const BigInt& rhs);
+friend bool operator!=(const BigInt& lhs, const BigInt& rhs);
+friend bool operator<(const BigInt& lhs, const BigInt& rhs);
+friend bool operator<=(const BigInt& lhs, const BigInt& rhs);
+friend bool operator>(const BigInt& lhs, const BigInt& rhs);
+friend bool operator>=(const BigInt& lhs, const BigInt& rhs);
 };
 
 // Binary addition operator (x + y)
 BigInt operator+(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
-    return result;
+    lhs += rhs;
+    return lhs;
 }
-
 // Binary subtraction operator (x - y)
 BigInt operator-(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
-    return result;
+    lhs -= rhs;
+    return lhs;
 }
 
 BigInt operator*(BigInt lhs, const BigInt& rhs) {
@@ -331,8 +437,8 @@ BigInt operator/(BigInt lhs, const BigInt& rhs) {
 // Binary modulus operator (x % y)
 BigInt operator%(BigInt lhs, const BigInt& rhs)
 {
-    BigInt result;
-    return result;
+    lhs %= rhs;
+    return lhs;
 }
 
 // Equality comparison operator (x == y)
@@ -399,7 +505,7 @@ int main()
     cout << "Your task is to implement ALL the functions above." << endl;
     cout << "The tests below will work once you implement them correctly." << endl << endl;
 
-    /*
+
     // Test 1: Constructors and basic output
     cout << "1. Constructors and output:" << endl;
     BigInt a(12345);
@@ -455,7 +561,7 @@ int main()
     cout << "Negative multiplication: " << BigInt(-5) * BigInt(3) << endl;
     cout << "Negative division: " << BigInt(-10) / BigInt(3) << endl;
     cout << "Negative modulus: " << BigInt(-10) % BigInt(3) << endl;
-    */
+
 
     return 0;
 }
