@@ -52,28 +52,87 @@ public:
 
     // Unary negation operator (-x)
     BigInt operator-() const {
-        BigInt result;
-        // TODO: Implement negation logic
+        BigInt result = *this;
+        if (result.number != "" && result.number != "0") {
+            result.isNegative = !result.isNegative;
+        }
         return result;
     }
 
     // Unary plus operator (+x)
     BigInt operator+() const {
-        BigInt result;
-        // TODO: Implement this operator
-        return result;
+        return *this;
     }
 
     // Addition assignment operator (x += y)
     BigInt& operator+=(const BigInt& other) {
-        // TODO: Implement this operator
+        if (this->isNegative == other.isNegative) {
+            string res = "";
+            int carry = 0;
+            int i = (int)this->number.length() - 1;
+            int j = (int)other.number.length() - 1;
+            while (i >= 0 || j >= 0 || carry > 0) {
+                int sum = carry;
+                if (i >= 0) sum += this->number[i--] - '0';
+                if (j >= 0) sum += other.number[j--] - '0';
+                char c = (sum % 10) + '0';
+                res = c + res;
+                carry = sum / 10;
+            }
+            this->number = res;
+        }
+        else {
+            int cmp = this->compareMagnitude(other);
+            if (cmp == 0) {
+                this->number = "0";
+                this->isNegative = false;
+            }
+            else {
+                string a = this->number;
+                string b = other.number;
+                bool resNegative = this->isNegative;
+                if (cmp < 0) {
+                    string t = a; a = b; b = t;
+                    resNegative = other.isNegative;
+                }
+                string res = "";
+                int borrow = 0;
+                int i = (int)a.length() - 1;
+                int j = (int)b.length() - 1;
+                while (i >= 0) {
+                    int sub = (a[i] - '0') - borrow;
+                    if (j >= 0) sub -= (b[j] - '0');
+                    if (sub < 0) {
+                        sub += 10;
+                        borrow = 1;
+                    }
+                    else {
+                        borrow = 0;
+                    }
+                    char c = sub + '0';
+                    res = c + res;
+                    i--; j--;
+                }
+                int start = 0;
+                while (start < (int)res.length() - 1 && res[start] == '0') start++;
+                this->number = res.substr(start);
+                this->isNegative = resNegative;
+            }
+        }
+        if (this->number.empty() || this->number == "0") {
+            this->number = "0";
+            this->isNegative = false;
+        }
         return *this;
     }
 
     // Subtraction assignment operator (x -= y)
     BigInt& operator-=(const BigInt& other) {
-        // TODO: Implement this operator
-        return *this;
+        BigInt temp = other;
+        if (temp.number != "" && temp.number != "0") {
+            temp.isNegative = !temp.isNegative;
+        }
+        return *this += temp;
     }
 
     // Multiplication assignment operator (x *= y)
