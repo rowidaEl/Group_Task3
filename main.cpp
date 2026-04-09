@@ -8,17 +8,30 @@ class BigInt
     bool isNegative;  // True if number is negative
 
     // Remove unnecessary leading zeros from the number string
-    void removeLeadingZeros()
-    {
-        // TODO: Implement this function
+    void removeLeadingZeros() {
+        int i = 0;
+        while (i < number.size() - 1 && number[i] == '0') {
+            i++;
+        }
+        number = number.substr(i);
+
+        if (number == "0") {
+            isNegative = false;
+        }
     }
 
     // Compare absolute values of two BigInts (ignore signs)
     // Returns: 1 if |this| > |other|, 0 if equal, -1 if |this| < |other|
-    int compareMagnitude(const BigInt& other) const
-    {
-        // TODO: Implement this function
-        return 0;
+   int compareMagnitude(const BigInt& other) const {
+        // Compare lengths first
+        if (number.size() > other.number.size()) return 1;
+        if (number.size() < other.number.size()) return -1;
+
+        // Same length → lexicographical comparison
+        if (number > other.number) return 1;
+        if (number < other.number) return -1;
+
+        return 0; // Equal
     }
 
 public:
@@ -130,6 +143,52 @@ public:
     BigInt& operator/=(const BigInt& other)
     {
         // TODO: Implement this operator
+        if(other.number == "0")
+        {
+            throw runtime_error("Division by zero");
+        }
+
+        BigInt dividend = *this;
+        BigInt divisor = other;
+        bool resultNegative = (dividend.isNegative != divisor.isNegative);
+        dividend.isNegative = false;
+        divisor.isNegative = false;
+        if(dividend.compareMagnitude(divisor) == -1)
+        {
+                number = "0";
+                isNegative = false ;
+                return *this;
+        }
+        BigInt low("0");
+        BigInt high = dividend;
+        BigInt best("0");
+        while(low <= high)
+        {
+
+            BigInt mid = (low + high) / BigInt(2);
+            BigInt product = mid * divisor;
+            if(product <= dividend)
+            {
+                best = mid ;
+                low = mid + BigInt(1);
+            }
+            else
+            {
+             high = mid - BigInt(1);
+            }
+        }
+        *this = best;
+        if(resultNegative && number != "0")
+        {
+            isNegative = true;
+
+        }
+        else
+        {
+        isNegative = false;
+        }
+
+
         return *this;
     }
 
@@ -174,13 +233,17 @@ public:
     string toString() const
     {
         // TODO: Implement this function
-        return "";
+        if (isNegative && number != "0") {
+            return "-" + number;
+        }
+        return number;
     }
 
     // Output stream operator (for printing)
     friend ostream& operator<<(ostream& os, const BigInt& num)
     {
         // TODO: Implement this operator
+        os << num.toString();
         return os;
     }
 
@@ -188,8 +251,35 @@ public:
     friend istream& operator>>(istream& is, BigInt& num)
     {
         // TODO: Implement this operator
+           string input;
+        is >> input;
+
+        // Reset values
+        num.isNegative = false;
+        num.number = "";
+
+        // Check for sign
+        if (input[0] == '-') {
+            num.isNegative = true;
+            num.number = input.substr(1);
+        } else if (input[0] == '+') {
+            num.number = input.substr(1);
+        } else {
+            num.number = input;
+        }
+
+        // Handle empty case (just in case)
+        if (num.number.empty()) {
+            num.number = "0";
+            num.isNegative = false;
+        }
+
+        // Remove leading zeros and normalize
+        num.removeLeadingZeros();
+
         return is;
     }
+
 
     // Friend declarations for comparison operators
     friend bool operator==(const BigInt& lhs, const BigInt& rhs);
@@ -221,11 +311,12 @@ BigInt operator*(BigInt lhs, const BigInt& rhs)
 }
 
 // Binary division operator (x / y)
-BigInt operator/(BigInt lhs, const BigInt& rhs)
-{
-    BigInt result;
+BigInt operator/(BigInt lhs, const BigInt& rhs) {
+   // BigInt result;
     // TODO: Implement this operator
-    return result;
+    lhs /= rhs;
+
+    return lhs;
 }
 
 // Binary modulus operator (x % y)
@@ -240,42 +331,57 @@ BigInt operator%(BigInt lhs, const BigInt& rhs)
 bool operator==(const BigInt& lhs, const BigInt& rhs)
 {
     // TODO: Implement this operator
-    return false;
+    if(lhs.isNegative != rhs.isNegative)
+    {
+        return false;
+    }
+
+    return lhs.number == rhs.number ;
 }
 
 // Inequality comparison operator (x != y)
 bool operator!=(const BigInt& lhs, const BigInt& rhs)
 {
     // TODO: Implement this operator
-    return false;
+    return !(lhs == rhs);
 }
 
 // Less-than comparison operator (x < y)
 bool operator<(const BigInt& lhs, const BigInt& rhs)
 {
     // TODO: Implement this operator
-    return false;
+    if(lhs.isNegative && !rhs.isNegative)
+        return true;
+    if(!lhs.isNegative && rhs.isNegative)
+        return false;
+    int temp = lhs.compareMagnitude(rhs);
+    if(!lhs.isNegative)
+        return temp == -1;
+    else
+    return temp == 1;
+
+
 }
 
 // Less-than-or-equal comparison operator (x <= y)
 bool operator<=(const BigInt& lhs, const BigInt& rhs)
 {
     // TODO: Implement this operator
-    return false;
+   return (lhs < rhs) || (lhs == rhs) ;
 }
 
 // Greater-than comparison operator (x > y)
 bool operator>(const BigInt& lhs, const BigInt& rhs)
 {
     // TODO: Implement this operator
-    return false;
+   return !(lhs <= rhs);
 }
 
 // Greater-than-or-equal comparison operator (x >= y)
 bool operator>=(const BigInt& lhs, const BigInt& rhs)
 {
     // TODO: Implement this operator
-    return false;
+    return !(lhs < rhs);
 }
 
 int main()
